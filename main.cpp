@@ -10,7 +10,7 @@ auto main(int argc, char* argv[]) -> int
     FreeConsole();
 #endif
 
-    OGL::OGLCore core;
+    OGL::OGLCore core("Sandbox", 640, 480);
 
     GLuint vertex_buffer, vertex_shader, fragment_shader, program;
     GLint mvp_location, vpos_location, vcol_location;
@@ -37,17 +37,14 @@ auto main(int argc, char* argv[]) -> int
     vcol_location = glGetAttribLocation(program, "vCol");
  
     glEnableVertexAttribArray(vpos_location);
-    glVertexAttribPointer(vpos_location, 2, GL_FLOAT, GL_FALSE,
-                          sizeof(vertices[0]), (void*) 0);
+    glVertexAttribPointer(vpos_location, 2, GL_FLOAT, GL_FALSE, sizeof(vertices[0]), (void*) 0);
     glEnableVertexAttribArray(vcol_location);
-    glVertexAttribPointer(vcol_location, 3, GL_FLOAT, GL_FALSE,
-                          sizeof(vertices[0]), (void*) (sizeof(float) * 2));
+    glVertexAttribPointer(vcol_location, 3, GL_FLOAT, GL_FALSE, sizeof(vertices[0]), (void*) (sizeof(float) * 2));
  
     while (core.isRunning())
     {
         float ratio;
         int width, height;
-        mat4x4 m, p, mvp;
  
         glfwGetFramebufferSize(core, &width, &height);
         ratio = width / (float) height;
@@ -55,13 +52,12 @@ auto main(int argc, char* argv[]) -> int
         glViewport(0, 0, width, height);
         glClear(GL_COLOR_BUFFER_BIT);
  
-        mat4x4_identity(m);
-        mat4x4_rotate_Z(m, m, (float) glfwGetTime());
-        mat4x4_ortho(p, -ratio, ratio, -1.f, 1.f, 1.f, -1.f);
-        mat4x4_mul(mvp, p, m);
+        glm::mat4 m = glm::rotate(glm::mat4(1.f), (float) glfwGetTime(), {0,0,1});
+        glm::mat4 p = glm::ortho(-ratio, ratio, -1.f, 1.f);
+        glm::mat4 mvp = p * m;
  
         glUseProgram(program);
-        glUniformMatrix4fv(mvp_location, 1, GL_FALSE, (const GLfloat*) mvp);
+        glUniformMatrix4fv(mvp_location, 1, GL_FALSE, (const GLfloat*) &mvp[0][0]);
         glDrawArrays(GL_TRIANGLES, 0, 3);
  
         core.update();

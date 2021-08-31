@@ -2,7 +2,8 @@
 #define GLFW_INCLUDE_NONE
 #include <GLFW/glfw3.h>
  
-#include "linmath.h"
+#include <glm/glm.hpp>
+#include <glm/ext.hpp>
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -52,15 +53,14 @@ static void key_callback(GLFWwindow* window, int key, int scancode, int action, 
 namespace OGL {
     class OGLCore {
     public:
-        OGLCore();
+        OGLCore(const char* Name, int Width, int Height);
         ~OGLCore();
 
         void update();
-        inline bool isRunning() { return !glfwWindowShouldClose(window); }
+        inline auto isRunning() -> bool { return !glfwWindowShouldClose(window); } 
         inline operator GLFWwindow*() { return window; }
 
     private:
         GLFWwindow* window;
-        bool valid { false };
     };
 }

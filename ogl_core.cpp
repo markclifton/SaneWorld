@@ -2,7 +2,7 @@
 
 namespace OGL {
 
-    OGLCore::OGLCore()
+    OGLCore::OGLCore(const char* Name, int Width, int Height)
     {
         glfwSetErrorCallback(error_callback);
  
@@ -12,7 +12,7 @@ namespace OGL {
         glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 2);
         glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
     
-        window = glfwCreateWindow(640, 480, "Simple example", NULL, NULL);
+        window = glfwCreateWindow(Width, Height, Name, NULL, NULL);
         if (!window)
         {
             glfwTerminate();
@@ -24,17 +24,12 @@ namespace OGL {
         glfwMakeContextCurrent(window);
         gladLoadGL();
         glfwSwapInterval(1);
-
-        valid = true;
     }
 
     OGLCore::~OGLCore()
     {
-        if(valid)
-        {
-            glfwDestroyWindow(window);
-            glfwTerminate();
-        }
+        glfwDestroyWindow(window);
+        glfwTerminate();
 
         exit(EXIT_SUCCESS);
     }
