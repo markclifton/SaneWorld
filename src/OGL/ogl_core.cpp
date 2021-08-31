@@ -8,8 +8,11 @@ OGLCore::OGLCore(const char *Name, int Width, int Height) {
   if (!glfwInit())
     exit(EXIT_FAILURE);
 
-  glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 2);
-  glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
+  glfwWindowHint(GLFW_SAMPLES, 4);
+  glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+  glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+  glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
+  glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
   window = glfwCreateWindow(Width, Height, Name, NULL, NULL);
   if (!window) {
@@ -20,14 +23,19 @@ OGLCore::OGLCore(const char *Name, int Width, int Height) {
   glfwSetKeyCallback(window, key_callback);
 
   glfwMakeContextCurrent(window);
-  gladLoadGL();
+  gladLoadGL(glfwGetProcAddress);
   glfwSwapInterval(1);
 
   glGenVertexArrays(1, &vao);
   glBindVertexArray(vao);
+
+  // glEnable(GL_CULL_FACE);
+  glCullFace(GL_BACK);
 }
 
 OGLCore::~OGLCore() {
+  glDeleteVertexArrays(1, &vao);
+
   glfwDestroyWindow(window);
   glfwTerminate();
 
@@ -52,7 +60,7 @@ glm::mat4 OGLCore::getOrthoProjection() {
   glfwGetFramebufferSize(window, &width, &height);
   ratio = width / (float)height;
 
-  return glm::ortho(-ratio, ratio, -1.f, 1.f);
+  return glm::perspective(glm::radians(45.f), 4.0f / 3.0f, 0.1f, 1000.0f);
 }
 
 } // namespace OGL
