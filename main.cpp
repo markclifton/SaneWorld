@@ -55,7 +55,9 @@ static void key_callback(GLFWwindow* window, int key, int scancode, int action, 
  
 auto main(int argc, char* argv[]) -> int
 {
+#ifdef WIN32
     FreeConsole();
+#endif
 
     GLFWwindow* window;
     GLuint vertex_buffer, vertex_shader, fragment_shader, program;
