@@ -9,16 +9,13 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${BuildDir}/${CMAKE_BUILD_TYPE})
 add_subdirectory(${CMAKE_SOURCE_DIR}/dependencies/glfw-3.3.4)
 add_subdirectory(${CMAKE_SOURCE_DIR}/dependencies/glm-0.9.9.8)
 
-file(GLOB SOURCEFILES
-    ${CMAKE_SOURCE_DIR}/main.cpp
-    ${CMAKE_SOURCE_DIR}/**.cpp
+file(GLOB_RECURSE SOURCEFILES
+    src/*.c
+    src/*.cpp
     ${CMAKE_SOURCE_DIR}/dependencies/glad/src/**.c
 )
 
-file(GLOB HEADERFILES
-    ${CMAKE_SOURCE_DIR}/*.hpp
-)
-
+include_directories(${CMAKE_SOURCE_DIR}/src)
 include_directories(${CMAKE_SOURCE_DIR}/dependencies/glad/include)
 include_directories(${CMAKE_SOURCE_DIR}/dependencies/glfw-3.3.4/include)
 include_directories(${CMAKE_SOURCE_DIR}/dependencies/glm-0.9.9.8)
@@ -27,7 +24,7 @@ set(GLFW_BUILD_DOCS OFF CACHE BOOL "" FORCE)
 set(GLFW_BUILD_TESTS OFF CACHE BOOL "" FORCE)
 set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
 
-add_executable(Sandbox ${SOURCEFILES} ${HEADERFILES})
+add_executable(Sandbox ${SOURCEFILES})
 
 find_package(OpenGL REQUIRED)
 
