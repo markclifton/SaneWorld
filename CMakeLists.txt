@@ -10,7 +10,7 @@ add_subdirectory(${CMAKE_SOURCE_DIR}/dependencies/glfw-3.3.4/)
 
 file(GLOB SOURCEFILES
     ${CMAKE_SOURCE_DIR}/main.cpp
-    ${CMAKE_SOURCE_DIR}/*.cpp
+    ${CMAKE_SOURCE_DIR}/**.cpp
     ${CMAKE_SOURCE_DIR}/dependencies/glad/src/**.c
 )
 
