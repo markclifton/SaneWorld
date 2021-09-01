@@ -1,3 +1,4 @@
+/*
 #ifdef WIN32
 #include <windows.h>
 #endif
@@ -7,96 +8,13 @@
 #include "OGL/ogl_buffer.hpp"
 #include "OGL/ogl_core.hpp"
 #include "OGL/ogl_shader.hpp"
+#include <OGL/ogl_shapeMgr.hpp>
 #include "Shaders/ogl_basic_shaders.hpp"
 
-struct OGLVertex {
-  float x, y, z;
-  float r, g, b;
-};
-
-class OGLRectangle {
+class Interval_Map {
 public:
-  OGLRectangle(float x, float y, float z, float h, float w) {
-    w = w / 2.f;
-    h = h / 2.f;
 
-    _vertices[0] = { x - w, y + h, z, 1, 0, 0 };
-    _vertices[1] = { x - w, y - h, z, 0, 1, 0 };
-    _vertices[2] = { x + w, y - h, z, 0, 1, 1 };
-    _vertices[3] = { x + w, y + h, z, 0, 0, 1 };
-  }
-
-  int indicesCount() { return sizeof(_indices) / sizeof(int); }
-  int* indices() { return &_indices[0]; }
-
-  int verticesCount() { return sizeof(_vertices) / sizeof(OGLVertex); }
-  OGLVertex* vertices() { return &_vertices[0]; }
-
-private:
-  OGLVertex _vertices[4];
-  int _indices[6]{ 0, 1, 2, 2, 3, 0 };
 };
-
-namespace OGL {
-  class VerticesManager {
-  public:
-    VerticesManager() : _buffer(GL_ARRAY_BUFFER) {}
-
-    void add(int count, OGLVertex* data) {
-      for (int i = 0; i < count; i++) {
-        _data.push_back(data[i]);
-      }
-    }
-
-    void bind() { _buffer.bind(); }
-
-    void buffer(GLenum type) {
-      _buffer.bind();
-      _buffer.bufferData(_data.size() * sizeof(OGLVertex), &_data[0], type);
-    }
-
-    void reset() { _data.clear(); }
-
-  private:
-    OGL::Buffer _buffer;
-    std::vector<OGLVertex> _data;
-  };
-
-  class IndicesManager {
-  public:
-    IndicesManager() : _buffer(GL_ELEMENT_ARRAY_BUFFER), _vertexCount(0) {}
-    ~IndicesManager() = default;
-
-    void add(int count, int* data) {
-      int vertexCount = 0;
-      for (int i = 0; i < count; i++) {
-        vertexCount = vertexCount > (data[i] + 1) ? vertexCount : data[i] + 1;
-        _data.push_back(data[i] + _vertexCount);
-      }
-      _vertexCount += vertexCount;
-    }
-
-    void buffer(GLenum type) {
-      _buffer.bind();
-      _buffer.bufferData(_data.size() * sizeof(int), &_data[0], type);
-    }
-
-    void draw() {
-      _buffer.bind();
-      glDrawElements(GL_TRIANGLES, (int)_data.size(), GL_UNSIGNED_INT, (void*)0);
-    }
-
-    void reset() {
-      _vertexCount = 0;
-      _data.clear();
-    }
-
-  private:
-    OGL::Buffer _buffer;
-    std::vector<int> _data;
-    int _vertexCount;
-  };
-} // namespace OGL
 
 int main(int argc, char* argv[]) {
 #if defined(WIN32) && defined(_DEBUG)
@@ -118,7 +36,7 @@ int main(int argc, char* argv[]) {
   OGL::IndicesManager indicesMgr;
 
   std::vector<OGLRectangle> shapes;
-  float scale = .00625f;
+  float scale = .5f;
   for (float x = -1.f; x < 1.f; x += scale) {
     for (float y = -1.f; y < 1.f; y += scale) {
       shapes.emplace_back(x, y, -1.f, scale, scale);
@@ -147,4 +65,108 @@ int main(int argc, char* argv[]) {
 
     core.update();
   }
+}
+*/
+
+#include <map>
+#include <limits>
+#include <cassert>
+#include <vector>
+#include <stdlib.h>
+#include <iostream>
+
+template<typename K, typename V>
+class interval_map {
+protected:
+  std::map<K, V> m_map;
+
+public:
+  interval_map() {
+    m_map.insert(m_map.end(), std::make_pair(0, 1000));
+  }
+
+  void assign(K const& keyBegin, K const& keyEnd, V const& val) {
+    if (!(keyBegin < keyEnd))
+      return;
+
+    auto nextInterval = --m_map.upper_bound(keyEnd);
+
+    auto inserted1 = m_map.end();
+    auto inserted2 = m_map.end();
+    assert(nextInterval != m_map.end());
+
+    if (nextInterval->second == val)
+      ++nextInterval;
+    else if (nextInterval->first < keyEnd)
+    {
+      if (nextInterval->second < val) {
+        assign(keyBegin, nextInterval->first, val);
+        return;
+      }
+      else
+      {
+        const V& nextValue = nextInterval->second;
+        ++nextInterval;
+        inserted1 = nextInterval = m_map.emplace_hint(nextInterval, keyEnd, nextValue);
+      }
+    }
+
+    try
+    {
+      auto prevInterval = nextInterval;
+      --prevInterval;
+      assert(prevInterval != m_map.end());
+
+      if (keyBegin < prevInterval->first)
+        prevInterval = --m_map.upper_bound(keyBegin);
+      assert(prevInterval != m_map.end());
+
+      if (!(prevInterval->second == val))
+      {
+        if (prevInterval->first < keyBegin)
+        {
+          ++prevInterval;
+          inserted2 = prevInterval = m_map.emplace_hint(prevInterval, keyBegin, val);
+        }
+        else
+        {
+          prevInterval->second = val;
+          if (prevInterval != m_map.begin() && !((--prevInterval)->second == val))
+          {
+            ++prevInterval;
+          }
+        }
+      }
+
+      assert(prevInterval != m_map.end());
+      m_map.erase(++prevInterval, nextInterval);
+    }
+    catch (...)
+    {
+      if (inserted1 != m_map.end())
+        m_map.erase(inserted1);
+      if (inserted2 != m_map.end())
+        m_map.erase(inserted2);
+      throw;
+    }
+  }
+
+  V const& operator[](K const& key) const {
+    return (--m_map.upper_bound(key))->second;
+  }
+};
+
+
+int main()
+{
+  std::map<int, interval_map<int, int>> maps;
+
+  maps[0] = interval_map<int, int>();
+  maps[0].assign(0, 1920, 100);
+
+  maps[0].assign(100, 200, 200);
+  maps[0].assign(400, 800, 50);
+
+  //maps[0].print();
+  return 0;
 }

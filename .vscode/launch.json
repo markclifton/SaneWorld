@@ -13,7 +13,7 @@
             "stopAtEntry": false,
             "cwd": "${BuildDir}/${CMAKE_BUILD_TYPE}/",
             "environment": [],
-            "console": "externalTerminal"
+            "console": "internalConsole"
         }
     ]
 }
