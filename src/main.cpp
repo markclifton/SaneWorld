@@ -1,4 +1,3 @@
-/*
 #ifdef WIN32
 #include <windows.h>
 #endif
@@ -10,11 +9,6 @@
 #include "OGL/ogl_shader.hpp"
 #include <OGL/ogl_shapeMgr.hpp>
 #include "Shaders/ogl_basic_shaders.hpp"
-
-class Interval_Map {
-public:
-
-};
 
 int main(int argc, char* argv[]) {
 #if defined(WIN32) && defined(_DEBUG)
@@ -65,108 +59,4 @@ int main(int argc, char* argv[]) {
 
     core.update();
   }
-}
-*/
-
-#include <map>
-#include <limits>
-#include <cassert>
-#include <vector>
-#include <stdlib.h>
-#include <iostream>
-
-template<typename K, typename V>
-class interval_map {
-protected:
-  std::map<K, V> m_map;
-
-public:
-  interval_map() {
-    m_map.insert(m_map.end(), std::make_pair(0, 1000));
-  }
-
-  void assign(K const& keyBegin, K const& keyEnd, V const& val) {
-    if (!(keyBegin < keyEnd))
-      return;
-
-    auto nextInterval = --m_map.upper_bound(keyEnd);
-
-    auto inserted1 = m_map.end();
-    auto inserted2 = m_map.end();
-    assert(nextInterval != m_map.end());
-
-    if (nextInterval->second == val)
-      ++nextInterval;
-    else if (nextInterval->first < keyEnd)
-    {
-      if (nextInterval->second < val) {
-        assign(keyBegin, nextInterval->first, val);
-        return;
-      }
-      else
-      {
-        const V& nextValue = nextInterval->second;
-        ++nextInterval;
-        inserted1 = nextInterval = m_map.emplace_hint(nextInterval, keyEnd, nextValue);
-      }
-    }
-
-    try
-    {
-      auto prevInterval = nextInterval;
-      --prevInterval;
-      assert(prevInterval != m_map.end());
-
-      if (keyBegin < prevInterval->first)
-        prevInterval = --m_map.upper_bound(keyBegin);
-      assert(prevInterval != m_map.end());
-
-      if (!(prevInterval->second == val))
-      {
-        if (prevInterval->first < keyBegin)
-        {
-          ++prevInterval;
-          inserted2 = prevInterval = m_map.emplace_hint(prevInterval, keyBegin, val);
-        }
-        else
-        {
-          prevInterval->second = val;
-          if (prevInterval != m_map.begin() && !((--prevInterval)->second == val))
-          {
-            ++prevInterval;
-          }
-        }
-      }
-
-      assert(prevInterval != m_map.end());
-      m_map.erase(++prevInterval, nextInterval);
-    }
-    catch (...)
-    {
-      if (inserted1 != m_map.end())
-        m_map.erase(inserted1);
-      if (inserted2 != m_map.end())
-        m_map.erase(inserted2);
-      throw;
-    }
-  }
-
-  V const& operator[](K const& key) const {
-    return (--m_map.upper_bound(key))->second;
-  }
-};
-
-
-int main()
-{
-  std::map<int, interval_map<int, int>> maps;
-
-  maps[0] = interval_map<int, int>();
-  maps[0].assign(0, 1920, 100);
-
-  maps[0].assign(100, 200, 200);
-  maps[0].assign(400, 800, 50);
-
-  //maps[0].print();
-  return 0;
 }
