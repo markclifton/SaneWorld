@@ -2,65 +2,74 @@
 
 namespace OGL {
 
-OGLCore::OGLCore(const char *Name, int Width, int Height) {
-  glfwSetErrorCallback(error_callback);
+  OGLCore::OGLCore(const char* Name, int Width, int Height) {
+    glfwSetErrorCallback(error_callback);
 
-  if (!glfwInit())
-    exit(EXIT_FAILURE);
+    if (!glfwInit())
+      exit(EXIT_FAILURE);
 
-  glfwWindowHint(GLFW_SAMPLES, 4);
-  glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
-  glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-  glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
-  glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+    glfwWindowHint(GLFW_SAMPLES, 4);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
+    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
-  window = glfwCreateWindow(Width, Height, Name, NULL, NULL);
-  if (!window) {
-    glfwTerminate();
-    exit(EXIT_FAILURE);
+    window = glfwCreateWindow(Width, Height, Name, NULL, NULL);
+    if (!window) {
+      glfwTerminate();
+      exit(EXIT_FAILURE);
+    }
+
+    glfwSetKeyCallback(window, key_callback);
+
+    glfwMakeContextCurrent(window);
+    gladLoadGL(glfwGetProcAddress);
+    glfwSwapInterval(1);
+
+    glGenVertexArrays(1, &vao);
+    glBindVertexArray(vao);
+
+    // glEnable(GL_CULL_FACE);
+    glCullFace(GL_BACK);
   }
 
-  glfwSetKeyCallback(window, key_callback);
+  OGLCore::~OGLCore() {
+    glDeleteVertexArrays(1, &vao);
 
-  glfwMakeContextCurrent(window);
-  gladLoadGL(glfwGetProcAddress);
-  glfwSwapInterval(1);
+    glfwDestroyWindow(window);
+    glfwTerminate();
 
-  glGenVertexArrays(1, &vao);
-  glBindVertexArray(vao);
+    exit(EXIT_SUCCESS);
+  }
 
-  // glEnable(GL_CULL_FACE);
-  glCullFace(GL_BACK);
-}
+  void OGLCore::update() {
+    glfwSwapBuffers(window);
+    glfwPollEvents();
 
-OGLCore::~OGLCore() {
-  glDeleteVertexArrays(1, &vao);
+    int width, height;
+    glfwGetFramebufferSize(window, &width, &height);
+    glViewport(0, 0, width, height);
 
-  glfwDestroyWindow(window);
-  glfwTerminate();
+    glClear(GL_COLOR_BUFFER_BIT);
+  }
 
-  exit(EXIT_SUCCESS);
-}
+  glm::mat4 OGLCore::getOrthoProjection() {
+    float ratio;
+    int width, height;
 
-void OGLCore::update() {
-  glfwSwapBuffers(window);
-  glfwPollEvents();
+    glfwGetFramebufferSize(window, &width, &height);
+    ratio = width / (float)height;
 
-  int width, height;
-  glfwGetFramebufferSize(window, &width, &height);
-  glViewport(0, 0, width, height);
+    return glm::ortho(-ratio, ratio, -1.f, 1.f, 1.f, -1.f);
+  }
 
-  glClear(GL_COLOR_BUFFER_BIT);
-}
+  glm::mat4 OGLCore::getPersProjection() {
+    float ratio;
+    int width, height;
 
-glm::mat4 OGLCore::getOrthoProjection() {
-  float ratio;
-  int width, height;
-
-  glfwGetFramebufferSize(window, &width, &height);
-  ratio = width / (float)height;
-
-  return glm::ortho(-ratio, ratio, -1.f, 1.f, 1.f, -1.f);
-}
+    glfwGetFramebufferSize(window, &width, &height);
+    ratio = width / (float)height;
+    return glm::perspective(45.0f, ratio, 1.0f, 200.0f);
+  }
 
 } // namespace OGL

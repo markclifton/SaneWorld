@@ -24,6 +24,7 @@
         "vector": "cpp",
         "xhash": "cpp",
         "xtree": "cpp",
-        "xlocnum": "cpp"
+        "xlocnum": "cpp",
+        "iterator": "cpp"
     }
 }
