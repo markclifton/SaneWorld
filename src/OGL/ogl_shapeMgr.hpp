@@ -5,7 +5,7 @@
 #include <cmath>
 
 struct OGLVertex {
-    float x, y, z;
+    float x, y, z, w;
     float r, g, b;
 };
 
@@ -17,21 +17,21 @@ public:
 
         float color = std::abs(z / 4.f);
 
-        _vertices[0] = { x - w, y + h, z, color, 0, 0 };
-        _vertices[1] = { x - w, y - h, z, 0, color, 0 };
-        _vertices[2] = { x + w, y - h, z, 0, color, color };
-        _vertices[3] = { x + w, y + h, z, 0, 0, color };
+        _vertices[0] = { x - w, y + h, z, 1, color, 0, 0 };
+        _vertices[1] = { x - w, y - h, z, 1, 0, color, 0 };
+        _vertices[2] = { x + w, y - h, z, 1, 0, color, color };
+        _vertices[3] = { x + w, y + h, z, 1, 0, 0, color };
     }
 
     int indicesCount() { return sizeof(_indices) / sizeof(int); }
-    int* indices() { return &_indices[0]; }
+    unsigned int* indices() { return &_indices[0]; }
 
     int verticesCount() { return sizeof(_vertices) / sizeof(OGLVertex); }
     OGLVertex* vertices() { return &_vertices[0]; }
 
 private:
     OGLVertex _vertices[4];
-    int _indices[6]{ 0, 1, 2, 2, 3, 0 };
+    unsigned int _indices[6]{ 0, 1, 2, 2, 3, 0 };
 };
 
 namespace OGL {
@@ -64,8 +64,8 @@ namespace OGL {
         IndicesManager() : _buffer(GL_ELEMENT_ARRAY_BUFFER), _vertexCount(0) {}
         ~IndicesManager() = default;
 
-        void add(int count, int* data) {
-            int vertexCount = 0;
+        void add(int count, unsigned int* data) {
+            unsigned int vertexCount = 0;
             for (int i = 0; i < count; i++) {
                 vertexCount = vertexCount > (data[i] + 1) ? vertexCount : data[i] + 1;
                 _data.push_back(data[i] + _vertexCount);
@@ -90,7 +90,7 @@ namespace OGL {
 
     private:
         OGL::Buffer _buffer;
-        std::vector<int> _data;
+        std::vector<unsigned int> _data;
         int _vertexCount;
     };
 } // namespace OGL
