@@ -13,6 +13,9 @@
 
 #define USE_D3D 1
 #include "MaskedOcclusionCulling/MaskedOcclusionCulling.h"
+#include "MaskedOcclusionCulling/CullingThreadpool.h"
+
+#include "simde-common.h"
 
 float deltaX = 0.f;
 float deltaY = 0.f;
@@ -23,12 +26,16 @@ int main(int argc, char* argv[]) {
   FreeConsole();
 #endif
 
-  const int WIDTH = 640;
-  const int HEIGHT = 480;
+  const int WIDTH = 1280;
+  const int HEIGHT = 720;
 
   MaskedOcclusionCulling* moc = MaskedOcclusionCulling::Create();
-  moc->SetResolution(WIDTH, HEIGHT);   // Set full HD resolution
+  moc->SetResolution(WIDTH, HEIGHT);
   moc->SetNearClipPlane(1.f);
+
+  CullingThreadpool pool(8, 8, 8);
+  pool.SetBuffer(moc);
+  pool.WakeThreads();
 
   OGL::OGLCore core("Sandbox", WIDTH, HEIGHT);
   OGL::ShaderProgram shaders(vs_modern, fs_modern);
@@ -45,9 +52,9 @@ int main(int argc, char* argv[]) {
   OGL::IndicesManager indicesMgr;
 
   std::vector<OGLRectangle> shapes;
-  float scale = .5f;
-  for (float x = -1.f; x < 1.f; x += scale) {
-    for (float y = -1.f; y < 1.f; y += scale) {
+  float scale = .25f;
+  for (float x = -3.f; x < 3.f; x += scale) {
+    for (float y = -3.f; y < 3.f; y += scale) {
       shapes.emplace_back(x, y, -5.f, scale, scale);
     }
   }
@@ -80,28 +87,30 @@ int main(int argc, char* argv[]) {
   glEnable(GL_DEPTH_TEST);
 
   while (core.isRunning()) {
+
     glm::mat4 m = glm::mat4(1.f);
     glm::mat4 p = core.getPersProjection();
     glm::mat4 mvp = p * m;
 
-    moc->ClearBuffer();
+    pool.ClearBuffer();
 
     float out[16]{ 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 };
 
     moveTest();
     moc->TransformVertices(&p[0][0], (float*)test.vertices(), out, 4, MaskedOcclusionCulling::VertexLayout(28, 4, 8));
-    moc->RenderTriangles(out, test.indices(), 2);
+
+    pool.RenderTriangles(out, test.indices(), 2);
 
     verticesMgr.reset();
     indicesMgr.reset();
 
+    pool.Flush();
     int countRenderedShapes = 0;
-
     for (auto& shape : shapes)
     {
       moc->TransformVertices(&p[0][0], (float*)shape.vertices(), out, 4, MaskedOcclusionCulling::VertexLayout(28, 4, 8));
 
-      MaskedOcclusionCulling::CullingResult result = moc->TestTriangles(out, shape.indices(), 2);
+      MaskedOcclusionCulling::CullingResult result = pool.TestTriangles(out, shape.indices(), 2); // moc->TestTriangles(out, shape.indices(), 2);
       if (result == MaskedOcclusionCulling::CullingResult::VISIBLE)
       {
         verticesMgr.add(shape.verticesCount(), shape.vertices());
@@ -109,7 +118,6 @@ int main(int argc, char* argv[]) {
         countRenderedShapes++;
       }
     }
-
     std::cout << "Rendering: " << countRenderedShapes << " shapes.\n";
 
     verticesMgr.add(test.verticesCount(), test.vertices());
