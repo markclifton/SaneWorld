@@ -8,10 +8,10 @@
             "name": "(Windows) Launch",
             "type": "cppvsdbg",
             "request": "launch",
-            "program": "${BuildDir}/${CMAKE_BUILD_TYPE}/Sandbox.exe",
+            "program": "${workspaceRoot}/build/Debug/Sandbox.exe",
             "args": [],
             "stopAtEntry": false,
-            "cwd": "${BuildDir}/${CMAKE_BUILD_TYPE}/",
+            "cwd": "${workspaceRoot}/build/Debug/",
             "environment": [],
             "console": "internalConsole"
         }

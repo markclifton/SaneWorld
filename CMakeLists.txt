@@ -13,12 +13,22 @@ file(GLOB_RECURSE SOURCEFILES
     src/*.c
     src/*.cpp
     ${CMAKE_SOURCE_DIR}/dependencies/glad/src/**.c
+    ${CMAKE_SOURCE_DIR}/dependencies/imgui/backends/imgui_impl_glfw.cpp
+    ${CMAKE_SOURCE_DIR}/dependencies/imgui/imgui.cpp
+    ${CMAKE_SOURCE_DIR}/dependencies/imgui/imgui_draw.cpp
+    ${CMAKE_SOURCE_DIR}/dependencies/imgui/imgui_widgets.cpp
+    ${CMAKE_SOURCE_DIR}/dependencies/imgui/imgui_tables.cpp
+    ${CMAKE_SOURCE_DIR}/dependencies/imgui/imgui_demo.cpp
+    ${CMAKE_SOURCE_DIR}/dependencies/imgui/backends/imgui_impl_opengl3.cpp
+    
 )
 
 include_directories(${CMAKE_SOURCE_DIR}/src)
 include_directories(${CMAKE_SOURCE_DIR}/dependencies/glad/include)
 include_directories(${CMAKE_SOURCE_DIR}/dependencies/glfw-3.3.4/include)
 include_directories(${CMAKE_SOURCE_DIR}/dependencies/glm-0.9.9.8)
+include_directories(${CMAKE_SOURCE_DIR}/dependencies/imgui)
+include_directories(${CMAKE_SOURCE_DIR}/dependencies/imgui/backends)
 
 set(GLFW_BUILD_DOCS OFF CACHE BOOL "" FORCE)
 set(GLFW_BUILD_TESTS OFF CACHE BOOL "" FORCE)
