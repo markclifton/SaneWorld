@@ -67,5 +67,6 @@
         "xlocmon": "cpp",
         "xloctime": "cpp",
         "xstddef": "cpp"
-    }
+    },
+    "C_Cpp.intelliSenseEngineFallback": "Enabled"
 }
