@@ -1,8 +1,9 @@
-[submodule "dependencies/imgui"]
-	url = https://github.com/markclifton/imgui.git
 [submodule "dependencies/glfw"]
 	path = dependencies/glfw
 	url = https://github.com/glfw/glfw.git
 [submodule "dependencies/glm"]
 	path = dependencies/glm
 	url = https://github.com/g-truc/glm.git
+[submodule "dependencies/imgui_wrapper/imgui"]
+	path = dependencies/imgui_wrapper/imgui
+	url = https://github.com/ocornut/imgui.git
