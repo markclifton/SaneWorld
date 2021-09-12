@@ -12,8 +12,8 @@ namespace OGL {
 
     void bind();
 
-    const GLuint ShaderProgram::getUniformLocaition(const char* name);
-    const GLuint ShaderProgram::getAttribLocation(const char* name);
+    const GLuint getUniformLocaition(const char* name);
+    const GLuint getAttribLocation(const char* name);
 
     operator GLuint() { return program; }
 
