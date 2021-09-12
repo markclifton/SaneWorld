@@ -6,29 +6,10 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${BuildDir}/${CMAKE_BUILD_TYPE})
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${BuildDir}/${CMAKE_BUILD_TYPE})
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${BuildDir}/${CMAKE_BUILD_TYPE})
 
+add_subdirectory(${CMAKE_SOURCE_DIR}/dependencies/glad)
 add_subdirectory(${CMAKE_SOURCE_DIR}/dependencies/glfw-3.3.4)
 add_subdirectory(${CMAKE_SOURCE_DIR}/dependencies/glm-0.9.9.8)
-
-file(GLOB_RECURSE SOURCEFILES
-    src/*.c
-    src/*.cpp
-    ${CMAKE_SOURCE_DIR}/dependencies/glad/src/**.c
-    ${CMAKE_SOURCE_DIR}/dependencies/imgui/backends/imgui_impl_glfw.cpp
-    ${CMAKE_SOURCE_DIR}/dependencies/imgui/imgui.cpp
-    ${CMAKE_SOURCE_DIR}/dependencies/imgui/imgui_draw.cpp
-    ${CMAKE_SOURCE_DIR}/dependencies/imgui/imgui_widgets.cpp
-    ${CMAKE_SOURCE_DIR}/dependencies/imgui/imgui_tables.cpp
-    ${CMAKE_SOURCE_DIR}/dependencies/imgui/imgui_demo.cpp
-    ${CMAKE_SOURCE_DIR}/dependencies/imgui/backends/imgui_impl_opengl3.cpp
-    
-)
-
-include_directories(${CMAKE_SOURCE_DIR}/src)
-include_directories(${CMAKE_SOURCE_DIR}/dependencies/glad/include)
-include_directories(${CMAKE_SOURCE_DIR}/dependencies/glfw-3.3.4/include)
-include_directories(${CMAKE_SOURCE_DIR}/dependencies/glm-0.9.9.8)
-include_directories(${CMAKE_SOURCE_DIR}/dependencies/imgui)
-include_directories(${CMAKE_SOURCE_DIR}/dependencies/imgui/backends)
+add_subdirectory(${CMAKE_SOURCE_DIR}/dependencies/imgui)
 
 set(GLFW_BUILD_DOCS OFF CACHE BOOL "" FORCE)
 set(GLFW_BUILD_TESTS OFF CACHE BOOL "" FORCE)
@@ -36,10 +17,27 @@ set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /arch:AVX2")
 
-add_executable(Sandbox ${SOURCEFILES})
+file(GLOB_RECURSE SRC_FILES
+    src/*.c
+    src/*.cpp
+)
+
+add_executable(${PROJECT_NAME} ${SRC_FILES})
+
+target_include_directories(${PROJECT_NAME} PRIVATE 
+    ${CMAKE_SOURCE_DIR}/src
+    ${CMAKE_SOURCE_DIR}/dependencies/glad/include
+    ${CMAKE_SOURCE_DIR}/dependencies/glfw-3.3.4/include
+    ${CMAKE_SOURCE_DIR}/dependencies/glm-0.9.9.8
+    ${CMAKE_SOURCE_DIR}/dependencies/imgui
+    ${CMAKE_SOURCE_DIR}/dependencies/imgui/backends
+)
 
 find_package(OpenGL REQUIRED)
-
-target_link_libraries(Sandbox glm)
-target_link_libraries(Sandbox glfw)
-target_link_libraries(Sandbox OpenGL::GL)
+target_link_libraries(${PROJECT_NAME}
+    glad
+    glfw
+    glm
+    ImGui
+    OpenGL::GL
+)
