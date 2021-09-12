@@ -38,6 +38,6 @@ target_link_libraries(${PROJECT_NAME}
     glad
     glfw
     glm
-    ImGui
+    imgui
     OpenGL::GL
 )
