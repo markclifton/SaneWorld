@@ -29,8 +29,7 @@ namespace OGL {
     glGenVertexArrays(1, &vao);
     glBindVertexArray(vao);
 
-    // glEnable(GL_CULL_FACE);
-    glCullFace(GL_BACK);
+    glEnable(GL_DEPTH_TEST);
   }
 
   OGLCore::~OGLCore() {
