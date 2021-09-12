@@ -7,8 +7,8 @@ set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${BuildDir}/${CMAKE_BUILD_TYPE})
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${BuildDir}/${CMAKE_BUILD_TYPE})
 
 add_subdirectory(${CMAKE_SOURCE_DIR}/dependencies/glad)
-add_subdirectory(${CMAKE_SOURCE_DIR}/dependencies/glfw-3.3.4)
-add_subdirectory(${CMAKE_SOURCE_DIR}/dependencies/glm-0.9.9.8)
+add_subdirectory(${CMAKE_SOURCE_DIR}/dependencies/glfw)
+add_subdirectory(${CMAKE_SOURCE_DIR}/dependencies/glm)
 add_subdirectory(${CMAKE_SOURCE_DIR}/dependencies/imgui)
 
 set(GLFW_BUILD_DOCS OFF CACHE BOOL "" FORCE)
@@ -27,8 +27,8 @@ add_executable(${PROJECT_NAME} ${SRC_FILES})
 target_include_directories(${PROJECT_NAME} PRIVATE 
     ${CMAKE_SOURCE_DIR}/src
     ${CMAKE_SOURCE_DIR}/dependencies/glad/include
-    ${CMAKE_SOURCE_DIR}/dependencies/glfw-3.3.4/include
-    ${CMAKE_SOURCE_DIR}/dependencies/glm-0.9.9.8
+    ${CMAKE_SOURCE_DIR}/dependencies/glfw/include
+    ${CMAKE_SOURCE_DIR}/dependencies/glm
     ${CMAKE_SOURCE_DIR}/dependencies/imgui
     ${CMAKE_SOURCE_DIR}/dependencies/imgui/backends
 )
