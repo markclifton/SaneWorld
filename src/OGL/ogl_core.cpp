@@ -1,5 +1,7 @@
 #include "OGL/ogl_core.hpp"
 
+#include "debugging/logging.hpp"
+
 namespace OGL {
 
   OGLCore::OGLCore(const char* Name, int Width, int Height) {
@@ -30,6 +32,8 @@ namespace OGL {
     glBindVertexArray(vao);
 
     glEnable(GL_DEPTH_TEST);
+
+    SANE_INFO("Created OGL Window and Context");
   }
 
   OGLCore::~OGLCore() {
