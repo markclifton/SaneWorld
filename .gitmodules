@@ -7,3 +7,6 @@
 [submodule "dependencies/imgui_wrapper/imgui"]
 	path = dependencies/imgui_wrapper/imgui
 	url = https://github.com/ocornut/imgui.git
+[submodule "dependencies/sane"]
+	path = dependencies/sane
+	url = https://github.com/markclifton/sane.git
