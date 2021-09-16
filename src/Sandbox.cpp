@@ -1,7 +1,3 @@
-#ifdef WIN32
-#include <windows.h>
-#endif
-
 #include "imgui.h"
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_opengl3.h"
@@ -17,6 +13,7 @@
 #include <sane/core/display.hpp>
 #include <sane/graphics/buffer.hpp>
 #include <sane/graphics/shaderprogram.hpp>
+#include <sane/graphics/framebuffer.hpp>
 
 #include <sane/debugging/logging.hpp>
 #include <sane/debugging/console.hpp>
@@ -25,12 +22,16 @@ class Sandbox : public Sane::App
 {
 public:
   Sandbox()
+    : display("Sandbox", WIDTH, HEIGHT)
   {
-#if defined(WIN32)
-    FreeConsole();
-#endif
-    ENABLE_LOGS();
-    core = new Sane::Display("Sandbox", WIDTH, HEIGHT);
+    IMGUI_CHECKVERSION();
+    ImGui::CreateContext();
+    ImGui::GetIO().ConfigFlags |= ImGuiConfigFlags_DockingEnable;
+    ImGui::GetIO().ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
+    ImGui::StyleColorsDark();
+
+    ImGui_ImplGlfw_InitForOpenGL(display, true);
+    ImGui_ImplOpenGL3_Init(nullptr);
   }
 
   ~Sandbox()
@@ -38,37 +39,48 @@ public:
     ImGui_ImplOpenGL3_Shutdown();
     ImGui_ImplGlfw_Shutdown();
     ImGui::DestroyContext();
-
-    DISABLE_LOGS();
   }
 
   virtual void Run() override
   {
-    IMGUI_CHECKVERSION();
-    ImGui::CreateContext();
-    ImGuiIO& io = ImGui::GetIO();
-    io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
-    io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
-    ImGui::StyleColorsDark();
+    Sane::Console debugConsole("Debug Console");
 
-    const char* glsl_version = "#version 130";
-    ImGui_ImplGlfw_InitForOpenGL(*core, true);
-    ImGui_ImplOpenGL3_Init(glsl_version);
+    Sane::ShaderProgram sProg(vs_modern, fs_modern);
+    GLint mvp_location = sProg.GetUniformLocaition("MVP");
+    Sane::VertexAttrib vPos(sProg.GetAttribLocation("vPos"), 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)0);
+    Sane::VertexAttrib vCol(sProg.GetAttribLocation("vCol"), 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)(4 * sizeof(float)));
+    VerticesManager vMgr;
+    IndicesManager iMgr;
 
-    const char* DebugConsole = "Debug Console";
-    Sane::Console debugConsole(DebugConsole);
+    Rectangle test(0, 0, -1, 1, 1);
+    vMgr.add(test.verticesCount(), test.vertices());
+    iMgr.add(test.indicesCount(), test.indices());
 
-    Sane::ShaderProgram shaders(vs_modern, fs_modern);
+    sProg.Bind();
 
-    GLint mvp_location = shaders.GetUniformLocaition("MVP");
+    vMgr.bind();
+    vMgr.buffer(GL_STATIC_DRAW);
+    iMgr.buffer(GL_STATIC_DRAW);
 
-    Sane::VertexAttrib vpos(shaders.GetAttribLocation("vPos"), 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)0);
-    Sane::VertexAttrib vcol(shaders.GetAttribLocation("vCol"), 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)(4 * sizeof(float)));
+    vPos.Enable();
+    vCol.Enable();
 
-    VerticesManager verticesMgr;
-    IndicesManager indicesMgr;
+    Sane::Framebuffer scene(WIDTH, HEIGHT);
 
-    while (core->IsRunning()) {
+    while (display.IsRunning()) {
+      glm::mat4 m = glm::mat4(1.f);
+      glm::mat4 p = display.GetPersProjection();
+      glm::mat4 mvp = p * m;
+
+      scene.Bind();
+      {
+        scene.Clear();
+        sProg.Bind();
+        glUniformMatrix4fv(mvp_location, 1, GL_FALSE, (const GLfloat*)&mvp[0][0]);
+        iMgr.draw();
+      }
+      scene.Unbind();
+
       ImGui_ImplOpenGL3_NewFrame();
       ImGui_ImplGlfw_NewFrame();
       ImGui::NewFrame();
@@ -80,30 +92,40 @@ public:
       }
       ImGui::End();
 
+      ImGui::Begin("GameWindow");
+      {
+        ImGui::BeginChild("GameRender");
+        ImVec2 wsize = ImGui::GetWindowSize();
+        ImGui::Image(reinterpret_cast<ImTextureID>(scene.GetAttachment(0)), wsize, ImVec2(0, 1), ImVec2(1, 0));
+        ImGui::EndChild();
+      }
+      ImGui::End();
+
       PROCESS_LOGS(debugConsole);
 
       ImGui::Render();
       ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
-      if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
+      if (ImGui::GetIO().ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
       {
         ImGui::UpdatePlatformWindows();
         ImGui::RenderPlatformWindowsDefault();
-        glfwMakeContextCurrent(*core);
+        glfwMakeContextCurrent(display);
       }
 
-      core->Update();
+      display.Update();
     }
   }
 
 private:
-  const int WIDTH = 1280;
-  const int HEIGHT = 720;
+  const size_t WIDTH = 1280;
+  const size_t HEIGHT = 720;
 
-  Sane::Display* core{ nullptr };
+  Sane::Display display;
 };
 
 Sane::App* Sane::CreateApp()
 {
+  ENABLE_LOGS();
   return new Sandbox();
 }
