@@ -69,16 +69,14 @@ public:
     ImVec2 sceneSize;
 
     while (display.IsRunning()) {
+      if (*(glm::vec2*)&sceneSize != scene.GetSize())
+      {
+        scene.Resize(sceneSize.x, sceneSize.y);
+      }
+
       scene.Bind();
       {
-        glViewport(0, 0, sceneSize.x, sceneSize.y);
-        float ratio = 16.f / 9.f * sceneSize.x / sceneSize.y;
-
-        if (sceneSize.y == 0.0)
-        {
-            ratio = 16.f / 9.f;
-        }
-
+        float ratio = sceneSize.x / sceneSize.y;
         glm::mat4 m = glm::mat4(1.f);
         glm::mat4 p = glm::ortho(-ratio, ratio, -1.f, 1.f, 1.f, 100.f);
         glm::mat4 mvp = p * m;
@@ -101,14 +99,17 @@ public:
       }
       ImGui::End();
 
+      ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.f, 0.f));
       ImGui::Begin("GameWindow");
       {
         ImGui::BeginChild("GameRender");
         sceneSize = ImGui::GetWindowSize();
-        ImGui::Image((ImTextureID)scene.GetAttachment(0), sceneSize, ImVec2(0, 1), ImVec2(1, 0));
+        uint64_t temp = scene.GetAttachment(0);
+        ImGui::Image((void*)temp, sceneSize, ImVec2(0, 1), ImVec2(1, 0));
         ImGui::EndChild();
       }
       ImGui::End();
+      ImGui::PopStyleVar();
 
       UpdateDbgConsole();
 
