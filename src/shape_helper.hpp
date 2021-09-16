@@ -15,12 +15,10 @@ public:
         w = w / 2.f;
         h = h / 2.f;
 
-        float color = std::abs(z / 4.f);
-
-        _vertices[0] = { x - w, y + h, z, 1, color, 0, 0 };
-        _vertices[1] = { x - w, y - h, z, 1, 0, color, 0 };
-        _vertices[2] = { x + w, y - h, z, 1, 0, color, color };
-        _vertices[3] = { x + w, y + h, z, 1, 0, 0, color };
+        _vertices[0] = { x - w, y + h, z, 1, 1, 0, 0 };
+        _vertices[1] = { x - w, y - h, z, 1, 0, 1, 0 };
+        _vertices[2] = { x + w, y - h, z, 1, 0, 1, 1 };
+        _vertices[3] = { x + w, y + h, z, 1, 0, 0, 1 };
     }
 
     int indicesCount() { return sizeof(_indices) / sizeof(int); }

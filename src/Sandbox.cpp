@@ -43,7 +43,7 @@ public:
 
   virtual void Run() override
   {
-    Sane::Console debugConsole("Debug Console");
+    CreateDbgConsole("Debug Console");
 
     Sane::ShaderProgram sProg(vs_modern, fs_modern);
     GLint mvp_location = sProg.GetUniformLocaition("MVP");
@@ -66,14 +66,23 @@ public:
     vCol.Enable();
 
     Sane::Framebuffer scene(WIDTH, HEIGHT);
+    ImVec2 sceneSize;
 
     while (display.IsRunning()) {
-      glm::mat4 m = glm::mat4(1.f);
-      glm::mat4 p = display.GetPersProjection();
-      glm::mat4 mvp = p * m;
-
       scene.Bind();
       {
+        glViewport(0, 0, sceneSize.x, sceneSize.y);
+        float ratio = 16.f / 9.f * sceneSize.x / sceneSize.y;
+
+        if (sceneSize.y == 0.0)
+        {
+            ratio = 16.f / 9.f;
+        }
+
+        glm::mat4 m = glm::mat4(1.f);
+        glm::mat4 p = glm::ortho(-ratio, ratio, -1.f, 1.f, 1.f, 100.f);
+        glm::mat4 mvp = p * m;
+
         scene.Clear();
         sProg.Bind();
         glUniformMatrix4fv(mvp_location, 1, GL_FALSE, (const GLfloat*)&mvp[0][0]);
@@ -95,13 +104,13 @@ public:
       ImGui::Begin("GameWindow");
       {
         ImGui::BeginChild("GameRender");
-        ImVec2 wsize = ImGui::GetWindowSize();
-        ImGui::Image(reinterpret_cast<ImTextureID>(scene.GetAttachment(0)), wsize, ImVec2(0, 1), ImVec2(1, 0));
+        sceneSize = ImGui::GetWindowSize();
+        ImGui::Image((ImTextureID)scene.GetAttachment(0), sceneSize, ImVec2(0, 1), ImVec2(1, 0));
         ImGui::EndChild();
       }
       ImGui::End();
 
-      PROCESS_LOGS(debugConsole);
+      UpdateDbgConsole();
 
       ImGui::Render();
       ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
