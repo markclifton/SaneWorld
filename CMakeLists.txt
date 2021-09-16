@@ -10,7 +10,7 @@ add_subdirectory(${CMAKE_SOURCE_DIR}/dependencies/glad)
 add_subdirectory(${CMAKE_SOURCE_DIR}/dependencies/glfw)
 add_subdirectory(${CMAKE_SOURCE_DIR}/dependencies/glm)
 add_subdirectory(${CMAKE_SOURCE_DIR}/dependencies/imgui_wrapper)
-add_subdirectory(${CMAKE_SOURCE_DIR}/dependencies/sane)
+add_subdirectory(${CMAKE_SOURCE_DIR}/dependencies/sane-engine)
 
 set(GLFW_BUILD_DOCS OFF CACHE BOOL "" FORCE)
 set(GLFW_BUILD_TESTS OFF CACHE BOOL "" FORCE)
@@ -32,15 +32,9 @@ target_include_directories(${PROJECT_NAME} PRIVATE
     ${CMAKE_SOURCE_DIR}/dependencies/glm
     ${CMAKE_SOURCE_DIR}/dependencies/imgui_wrapper/imgui
     ${CMAKE_SOURCE_DIR}/dependencies/imgui_wrapper/imgui/backends
-    ${CMAKE_SOURCE_DIR}/dependencies/sane/src
+    ${CMAKE_SOURCE_DIR}/dependencies/sane-engine/src
 )
 
-find_package(OpenGL REQUIRED)
 target_link_libraries(${PROJECT_NAME}
-    glad
-    glfw
-    glm
-    imgui
-    OpenGL::GL
     SaneEngine
 )

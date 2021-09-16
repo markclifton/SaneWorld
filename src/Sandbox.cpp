@@ -10,21 +10,16 @@
 #include <sstream>
 #include <vector>
 
-#include <OGL/ogl_buffer.hpp>
-#include <OGL/ogl_core.hpp>
-#include <OGL/ogl_shader.hpp>
-#include <OGL/ogl_shapeMgr.hpp>
-#include <Shaders/ogl_basic_shaders.hpp>
+#include <shape_helper.hpp>
+#include <shader_code.hpp>
 
-#define USE_D3D 1
-#include "MaskedOcclusionCulling/MaskedOcclusionCulling.h"
-#include "MaskedOcclusionCulling/CullingThreadpool.h"
+#include <sane/entrypoint.hpp>
+#include <sane/core/display.hpp>
+#include <sane/graphics/buffer.hpp>
+#include <sane/graphics/shaderprogram.hpp>
 
-#include <../dependencies/sane/src/debugging/logging.hpp>
-#include <../dependencies/sane/src/debugging/imgui_console.hpp>
-
-#include <app.hpp>
-#include <entrypoint.hpp>
+#include <sane/debugging/logging.hpp>
+#include <sane/debugging/console.hpp>
 
 class Sandbox : public Sane::App
 {
@@ -35,7 +30,7 @@ public:
     FreeConsole();
 #endif
     ENABLE_LOGS();
-    core = new OGL::OGLCore("Sandbox", WIDTH, HEIGHT);
+    core = new Sane::Display("Sandbox", WIDTH, HEIGHT);
   }
 
   ~Sandbox()
@@ -61,22 +56,19 @@ public:
     ImGui_ImplOpenGL3_Init(glsl_version);
 
     const char* DebugConsole = "Debug Console";
-    Sane::ImguiConsole debugConsole(DebugConsole);
+    Sane::Console debugConsole(DebugConsole);
 
-    OGL::ShaderProgram shaders(vs_modern, fs_modern);
+    Sane::ShaderProgram shaders(vs_modern, fs_modern);
 
-    GLint mvp_location = shaders.getUniformLocaition("MVP");
-    OGL::VertexAttrib vpos(shaders.getAttribLocation("vPos"), 3, GL_FLOAT,
-      GL_FALSE, sizeof(OGLVertex), (void*)0);
+    GLint mvp_location = shaders.GetUniformLocaition("MVP");
 
-    OGL::VertexAttrib vcol(shaders.getAttribLocation("vCol"), 3, GL_FLOAT,
-      GL_FALSE, sizeof(OGLVertex),
-      (void*)(4 * sizeof(float)));
+    Sane::VertexAttrib vpos(shaders.GetAttribLocation("vPos"), 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)0);
+    Sane::VertexAttrib vcol(shaders.GetAttribLocation("vCol"), 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)(4 * sizeof(float)));
 
-    OGL::VerticesManager verticesMgr;
-    OGL::IndicesManager indicesMgr;
+    VerticesManager verticesMgr;
+    IndicesManager indicesMgr;
 
-    while (core->isRunning()) {
+    while (core->IsRunning()) {
       ImGui_ImplOpenGL3_NewFrame();
       ImGui_ImplGlfw_NewFrame();
       ImGui::NewFrame();
@@ -100,7 +92,7 @@ public:
         glfwMakeContextCurrent(*core);
       }
 
-      core->update();
+      core->Update();
     }
   }
 
@@ -108,7 +100,7 @@ private:
   const int WIDTH = 1280;
   const int HEIGHT = 720;
 
-  OGL::OGLCore* core{ nullptr };
+  Sane::Display* core{ nullptr };
 };
 
 Sane::App* Sane::CreateApp()
