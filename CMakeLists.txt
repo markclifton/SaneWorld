@@ -6,7 +6,7 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${BuildDir}/${CMAKE_BUILD_TYPE})
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${BuildDir}/${CMAKE_BUILD_TYPE})
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${BuildDir}/${CMAKE_BUILD_TYPE})
 
-add_subdirectory(${CMAKE_SOURCE_DIR}/dependencies/sane-engine)
+add_subdirectory(${CMAKE_SOURCE_DIR}/deps/sane)
 
 file(GLOB_RECURSE SRC_FILES
     src/*.c
@@ -16,12 +16,12 @@ file(GLOB_RECURSE SRC_FILES
 add_executable(${PROJECT_NAME} ${SRC_FILES})
 
 target_include_directories(${PROJECT_NAME} PUBLIC 
-    ${CMAKE_SOURCE_DIR}/src
-    ${CMAKE_SOURCE_DIR}/dependencies/sane-engine/src
+    ${PROJECT_SOURCE_DIR}/src
+    ${PROJECT_SOURCE_DIR}/deps/sane
 )
 
-target_link_libraries(${PROJECT_NAME} SaneEngine)
+target_link_libraries(${PROJECT_NAME} Sane)
 
 add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_SOURCE_DIR}/resources/imgui.ini ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}
+    COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_SOURCE_DIR}/res/imgui.ini ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}
 )
