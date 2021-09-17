@@ -6,17 +6,7 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${BuildDir}/${CMAKE_BUILD_TYPE})
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${BuildDir}/${CMAKE_BUILD_TYPE})
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${BuildDir}/${CMAKE_BUILD_TYPE})
 
-add_subdirectory(${CMAKE_SOURCE_DIR}/dependencies/glad)
-add_subdirectory(${CMAKE_SOURCE_DIR}/dependencies/glfw)
-add_subdirectory(${CMAKE_SOURCE_DIR}/dependencies/glm)
-add_subdirectory(${CMAKE_SOURCE_DIR}/dependencies/imgui_wrapper)
 add_subdirectory(${CMAKE_SOURCE_DIR}/dependencies/sane-engine)
-
-set(GLFW_BUILD_DOCS OFF CACHE BOOL "" FORCE)
-set(GLFW_BUILD_TESTS OFF CACHE BOOL "" FORCE)
-set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
-
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /arch:AVX2")
 
 file(GLOB_RECURSE SRC_FILES
     src/*.c
@@ -25,19 +15,12 @@ file(GLOB_RECURSE SRC_FILES
 
 add_executable(${PROJECT_NAME} ${SRC_FILES})
 
-target_include_directories(${PROJECT_NAME} PRIVATE 
+target_include_directories(${PROJECT_NAME} PUBLIC 
     ${CMAKE_SOURCE_DIR}/src
-    ${CMAKE_SOURCE_DIR}/dependencies/glad/include
-    ${CMAKE_SOURCE_DIR}/dependencies/glfw/include
-    ${CMAKE_SOURCE_DIR}/dependencies/glm
-    ${CMAKE_SOURCE_DIR}/dependencies/imgui_wrapper/imgui
-    ${CMAKE_SOURCE_DIR}/dependencies/imgui_wrapper/imgui/backends
     ${CMAKE_SOURCE_DIR}/dependencies/sane-engine/src
 )
 
-target_link_libraries(${PROJECT_NAME}
-    SaneEngine
-)
+target_link_libraries(${PROJECT_NAME} SaneEngine)
 
 add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_SOURCE_DIR}/resources/imgui.ini ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}
