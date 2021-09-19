@@ -73,7 +73,8 @@
         "queue": "cpp",
         "random": "cpp",
         "stop_token": "cpp",
-        "thread": "cpp"
+        "thread": "cpp",
+        "string_view": "cpp"
     },
     "C_Cpp.intelliSenseEngineFallback": "Enabled"
 }

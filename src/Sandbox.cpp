@@ -6,7 +6,6 @@
 #include <sstream>
 #include <vector>
 
-#include <shape_helper.hpp>
 #include <shader_code.hpp>
 
 #include <sane/entrypoint.hpp>
@@ -14,7 +13,7 @@
 #include <sane/graphics/buffer.hpp>
 #include <sane/graphics/shaderprogram.hpp>
 #include <sane/graphics/framebuffer.hpp>
-
+#include <sane/graphics/texture.hpp>
 #include <sane/debugging/logging.hpp>
 #include <sane/debugging/console.hpp>
 
@@ -45,29 +44,43 @@ public:
   {
     CreateDbgConsole("Debug Console");
 
-    Sane::ShaderProgram sProg(vs_modern, fs_modern);
+    Sane::ShaderProgram sProg(vs_modern_tex, fs_modern_tex);
     GLint mvp_location = sProg.GetUniformLocaition("MVP");
-    Sane::VertexAttrib vPos(sProg.GetAttribLocation("vPos"), 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)0);
-    Sane::VertexAttrib vCol(sProg.GetAttribLocation("vCol"), 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)(4 * sizeof(float)));
-    VerticesManager vMgr;
-    IndicesManager iMgr;
+    Sane::VertexAttrib vPos(sProg.GetAttribLocation("aPos"), 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
+    Sane::VertexAttrib vCol(sProg.GetAttribLocation("aColor"), 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float)));
+    Sane::VertexAttrib vUV(sProg.GetAttribLocation("aTexCoord"), 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
 
-    Rectangle test(0, 0, -1, 1, 1);
-    vMgr.add(test.verticesCount(), test.vertices());
-    iMgr.add(test.indicesCount(), test.indices());
+    Sane::Buffer vbo(GL_ARRAY_BUFFER);
+    Sane::Buffer ibo(GL_ELEMENT_ARRAY_BUFFER);
+
+    float vertices[] = {
+      // positions          // colors           // texture coords
+       0.5f,  0.5f, -1.0f,   1.0f, 0.0f, 0.0f,   1.0f, 1.0f, // top right
+       0.5f, -0.5f, -1.0f,   0.0f, 1.0f, 0.0f,   1.0f, 0.0f, // bottom right
+      -0.5f, -0.5f, -1.0f,   0.0f, 0.0f, 1.0f,   0.0f, 0.0f, // bottom left
+      -0.5f,  0.5f, -1.0f,   1.0f, 1.0f, 0.0f,   0.0f, 1.0f  // top left 
+    };
+    unsigned int indices[] = {
+        0, 1, 3, // first triangle
+        1, 2, 3  // second triangle
+    };
 
     sProg.Bind();
 
-    vMgr.bind();
-    vMgr.buffer(GL_STATIC_DRAW);
-    iMgr.buffer(GL_STATIC_DRAW);
+    vbo.Bind();
+    vbo.BufferData(sizeof(vertices), vertices, GL_STATIC_DRAW);
+
+    ibo.Bind();
+    ibo.BufferData(sizeof(indices), indices, GL_STATIC_DRAW);
 
     vPos.Enable();
     vCol.Enable();
+    vUV.Enable();
+
+    Sane::Texture tex("images/texture.png");
 
     Sane::Framebuffer scene(WIDTH, HEIGHT);
     ImVec2 sceneSize;
-
     while (display.IsRunning()) {
       if (*(glm::vec2*)&sceneSize != scene.GetSize())
       {
@@ -76,17 +89,20 @@ public:
 
       scene.Bind();
       {
-        float ratio = sceneSize.x / sceneSize.y;
+        float ratio = 16.f / 9.f;//sceneSize.x / sceneSize.y;
         glm::mat4 m = glm::mat4(1.f);
         glm::mat4 p = glm::ortho(-ratio, ratio, -1.f, 1.f, 1.f, 100.f);
         glm::mat4 mvp = p * m;
 
+        tex.Bind();
+
         scene.Clear();
         sProg.Bind();
         glUniformMatrix4fv(mvp_location, 1, GL_FALSE, (const GLfloat*)&mvp[0][0]);
-        iMgr.draw();
+        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, (void*)0);
       }
       scene.Unbind();
+
 
       ImGui_ImplOpenGL3_NewFrame();
       ImGui_ImplGlfw_NewFrame();

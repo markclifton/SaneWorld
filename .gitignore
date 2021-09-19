@@ -10,3 +10,5 @@ build/
 .vs/VSWorkspaceState.json
 
 .vs/OpenGL-Sandbox/project-colors.json
+
+res/images/.DS_Store
