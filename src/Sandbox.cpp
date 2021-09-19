@@ -3,6 +3,7 @@
 #include "imgui_impl_opengl3.h"
 
 #include <iostream>
+#include <filesystem>
 #include <sstream>
 #include <vector>
 
@@ -43,6 +44,7 @@ public:
   virtual void Run() override
   {
     CreateDbgConsole("Debug Console");
+    SANE_WARN("Current path is " << std::filesystem::current_path());
 
     Sane::ShaderProgram sProg(vs_modern_tex, fs_modern_tex);
     GLint mvp_location = sProg.GetUniformLocaition("MVP");
