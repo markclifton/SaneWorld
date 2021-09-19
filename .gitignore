@@ -12,3 +12,5 @@ build/
 .vs/OpenGL-Sandbox/project-colors.json
 
 res/images/.DS_Store
+
+.DS_Store
