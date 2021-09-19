@@ -23,9 +23,6 @@ target_include_directories(${PROJECT_NAME} PUBLIC
 target_link_libraries(${PROJECT_NAME} Sane)
 
 add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_SOURCE_DIR}/res/imgui.ini ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}
-)
-
-add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
-                   COMMAND ${CMAKE_COMMAND} -E copy_directory
-                   ${CMAKE_SOURCE_DIR}/res/ ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+    ${PROJECT_SOURCE_DIR}/res/
+    $<TARGET_FILE_DIR:${PROJECT_NAME}>)
