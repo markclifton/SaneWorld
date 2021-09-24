@@ -25,12 +25,76 @@ float deltaX = 0.f;
 float deltaY = 0.f;
 float deltaZ = 0.f;
 
+class ImguiConsole : public Sane::Layer
+{
+public:
+  ImguiConsole()
+    : logSink(Sane::Logging::GetLogSink())
+  {}
+
+  virtual void Process() override
+  {
+    logSink->Render();
+  }
+
+private:
+  const Sane::Logging::LogSink logSink;
+};
+
+class ImguiFpsCounter : public Sane::Layer
+{
+public:
+  virtual void Process() override
+  {
+    if (ImGui::Begin("Framerate"))
+    {
+      ImGui::Text("%.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+    }
+    ImGui::End();
+  }
+};
+
+class KeyEvent : public Sane::EventDispatcher
+{
+public:
+  KeyEvent() = default;
+  void Submit()
+  {
+    int key = 52;
+
+    Sane::Event event;
+    event.id = 0;
+    event.data = &key;
+    event.size = sizeof(key);
+
+    SubmitEvent(event);
+    //  SANE_INFO("Submitted event: {}", *(int*)event.data);
+
+  }
+};
+
+class KeyHandler : public Sane::EventListener
+{
+public:
+  KeyHandler()
+    : Sane::EventListener("KeyHandler")
+  {
+  }
+
+  virtual bool ProcessEvent(Sane::Event& evt) override
+  {
+    SANE_INFO("Processed event: {} w/ {}", *(int*)evt.data, Name());
+    return false;
+  }
+
+};
+
+
 class Sandbox : public Sane::App
 {
 public:
   Sandbox()
     : display("Sandbox", WIDTH, HEIGHT)
-    , ssink(Sane::Logging::GetLogSink())
   {
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
@@ -56,10 +120,39 @@ public:
 
   virtual void Run() override
   {
+    KeyHandler kh;
+    KeyEvent ke;
+
+    ImguiConsole console;
+    ImguiFpsCounter fpsCounter;
+    layers.PushOverlay(&console);
+    layers.PushOverlay(&fpsCounter);
+
+    unsigned int box_indices[] = {
+      0, 2, 3, 0, 3, 1,
+      2, 6, 7, 2, 7, 3,
+      6, 4, 5, 6, 5, 7,
+      4, 0, 1, 4, 1, 5,
+      0, 4, 6, 0, 6, 2,
+      1, 5, 7, 1, 7, 3,
+    };
+
     SANE_WARN("Current path is {}", std::filesystem::current_path().c_str());
 
     struct Vertex {
       float x, y, z, w, r, g, b;
+    };
+
+    auto getBBox = [](Vertex verts[8], float minx, float miny, float minz, float maxx, float maxy, float maxz) {
+      verts[0] = { minx, maxy, maxz, 1, 1, 0, 0 };
+      verts[1] = { minx, miny, maxz, 1, 1, 0, 0 };
+      verts[2] = { maxx, maxy, maxz, 1, 1, 0, 0 };
+      verts[3] = { maxx, miny, maxz, 1, 1, 0, 0 };
+
+      verts[4] = { minx, maxy, minz, 1, 1, 0, 0 };
+      verts[5] = { minx, miny, minz, 1, 1, 0, 0 };
+      verts[6] = { maxx, maxy, minz, 1, 1, 0, 0 };
+      verts[7] = { maxx, miny, minz, 1, 1, 0, 0 };
     };
 
     unsigned int indices[] = {
@@ -131,23 +224,36 @@ public:
     createSquare(s, -.5f, 0, -3, .5f, .5f);
     createSquare(&s[4], -.5f, 0, -3, .5f, .5f);
 
+    Vertex cube[8];
+    getBBox(cube, -5, -1, -10, -4, 0, -9);
+
     Sane::ShaderProgram sProg_no_tex(vs_modern, fs_modern);
     Sane::VertexAttrib vPos_no_tex(sProg_no_tex.GetAttribLocation("vPos"), 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)0);
     Sane::VertexAttrib vCol_no_tex(sProg_no_tex.GetAttribLocation("vCol"), 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)(4 * sizeof(float)));
     GLint mvp_location_no_tex = sProg_no_tex.GetUniformLocaition("MVP");
     Sane::Buffer vbo_no_tex(GL_ARRAY_BUFFER);
     Sane::Buffer ibo_no_tex(GL_ELEMENT_ARRAY_BUFFER);
+
+    Sane::Buffer vbo_no_tex_cube(GL_ARRAY_BUFFER);
+    Sane::Buffer ibo_no_tex_cube(GL_ELEMENT_ARRAY_BUFFER);
     {
       sProg_no_tex.Bind();
 
       vbo_no_tex.Bind();
       vbo_no_tex.BufferData(sizeof(s), &s[0], GL_STATIC_DRAW);
+      vbo_no_tex.Unbind();
 
       ibo_no_tex.Bind();
       ibo_no_tex.BufferData(sizeof(indices), indices, GL_STATIC_DRAW);
-
       ibo_no_tex.Unbind();
-      vbo_no_tex.Unbind();
+
+      vbo_no_tex_cube.Bind();
+      vbo_no_tex_cube.BufferData(8 * sizeof(Vertex), &s[0], GL_STATIC_DRAW);
+      vbo_no_tex_cube.Unbind();
+
+      ibo_no_tex_cube.Bind();
+      ibo_no_tex_cube.BufferData(sizeof(box_indices), box_indices, GL_STATIC_DRAW);
+      ibo_no_tex_cube.Unbind();
 
       sProg_no_tex.Unbind();
     }
@@ -156,7 +262,8 @@ public:
     float min = -7.f;
     float max = -1.f;
 
-    bool visible = true;
+    bool squareVisible = true;
+    bool cubeVisible = true;
 
     Sane::Framebuffer scene(WIDTH, HEIGHT);
     ImVec2 sceneSize;
@@ -171,20 +278,22 @@ public:
         scene.Clear();
 
         float ratio = sceneSize.x / sceneSize.y;
-        glm::mat4 m = glm::mat4(1.f);
-        glm::mat4 p = display.GetPersProjection();// glm::ortho(-ratio, ratio, -1.f, 1.f, 1.f, 100.f);
+        glm::mat4 m = glm::rotate(glm::mat4(1.f), (float)glfwGetTime(), { 0, 0, 1 });
+        glm::mat4 p = display.GetPersProjection();
         glm::mat4 mvp = p * m;
 
         {
           moveSquare(&s[0], deltaX, -deltaY, deltaZ);
-          SANE_INFO("z: {}", s[0].z);
-
           {
             sProg_no_tex.Bind();
 
             vbo_no_tex.Bind();
-            vbo_no_tex.BufferData((visible ? sizeof(s) : sizeof(s) / 2), &s[0], GL_STATIC_DRAW);
+            vbo_no_tex.BufferData((squareVisible ? sizeof(s) : sizeof(s) / 2), &s[0], GL_STATIC_DRAW);
             vbo_no_tex.Unbind();
+
+            vbo_no_tex_cube.Bind();
+            vbo_no_tex_cube.BufferData(sizeof(cube), (void*)&cube, GL_STATIC_DRAW);
+            vbo_no_tex_cube.Unbind();
 
             sProg_no_tex.Unbind();
           }
@@ -196,27 +305,46 @@ public:
           moc->TransformVertices(&p[0][0], (float*)&s[0], xformVerts, 8, MaskedOcclusionCulling::VertexLayout(28, 4, 8));
 
           moc->RenderTriangles(&xformVerts[0], indices, 2);
-          auto result = moc->TestTriangles(&xformVerts[16], indices, 2);
+          squareVisible = !moc->TestTriangles(&xformVerts[16], indices, 2);
 
-          SANE_WARN("Square visible: {}", !result);
-          visible = !result;
+          float outVerts[32];
+          moc->TransformVertices(&mvp[0][0], (float*)&cube, outVerts, 8, { 28, 4, 8 });
+          cubeVisible = !moc->TestTriangles(outVerts, box_indices, 12);
         }
 
         {
           sProg_no_tex.Bind();
 
-          vbo_no_tex.Bind();
-          vPos_no_tex.Enable();
-          vCol_no_tex.Enable();
+          {
+            vbo_no_tex.Bind();
+            vPos_no_tex.Enable();
+            vCol_no_tex.Enable();
 
-          ibo_no_tex.Bind();
-          glUniformMatrix4fv(mvp_location_no_tex, 1, GL_FALSE, (const GLfloat*)&mvp[0][0]);
-          glDrawElements(GL_TRIANGLES, (visible ? 12 : 6), GL_UNSIGNED_INT, (void*)0);
-          ibo_no_tex.Unbind();
+            ibo_no_tex.Bind();
+            glUniformMatrix4fv(mvp_location_no_tex, 1, GL_FALSE, (const GLfloat*)&p[0][0]);
+            glDrawElements(GL_TRIANGLES, (squareVisible ? 12 : 6), GL_UNSIGNED_INT, (void*)0);
+            ibo_no_tex.Unbind();
 
-          vCol_no_tex.Disable();
-          vPos_no_tex.Disable();
-          vbo_no_tex.Unbind();
+            vCol_no_tex.Disable();
+            vPos_no_tex.Disable();
+            vbo_no_tex.Unbind();
+          }
+
+          if (cubeVisible)
+          {
+            vbo_no_tex_cube.Bind();
+            vPos_no_tex.Enable();
+            vCol_no_tex.Enable();
+
+            ibo_no_tex_cube.Bind();
+            glUniformMatrix4fv(mvp_location_no_tex, 1, GL_FALSE, (const GLfloat*)&mvp[0][0]);
+            glDrawElements(GL_TRIANGLES, 12, GL_UNSIGNED_INT, (void*)0);
+            ibo_no_tex_cube.Unbind();
+
+            vCol_no_tex.Disable();
+            vPos_no_tex.Disable();
+            vbo_no_tex_cube.Unbind();
+          }
 
           sProg_no_tex.Unbind();
         }
@@ -233,7 +361,7 @@ public:
           vUV.Enable();
 
           ibo.Bind();
-          glUniformMatrix4fv(mvp_location, 1, GL_FALSE, (const GLfloat*)&mvp[0][0]);
+          glUniformMatrix4fv(mvp_location, 1, GL_FALSE, (const GLfloat*)&p[0][0]);
           glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, (void*)0);
           ibo.Unbind();
 
@@ -255,11 +383,6 @@ public:
       ImGui::NewFrame();
 
       ImGui::DockSpaceOverViewport(ImGui::GetMainViewport());
-      if (ImGui::Begin("Framerate"))
-      {
-        ImGui::Text("%.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
-      }
-      ImGui::End();
 
       ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.f, 0.f));
       ImGui::Begin("GameWindow");
@@ -273,8 +396,11 @@ public:
       ImGui::End();
       ImGui::PopStyleVar();
 
-      //UpdateDbgConsole();
-      ssink->Render();
+      for (auto& layer : layers)
+      {
+        layer->Process();
+      }
+
 
       ImGui::Render();
       ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
@@ -294,7 +420,6 @@ private:
   const size_t WIDTH = 1280;
   const size_t HEIGHT = 720;
 
-  const Sane::Logging::LogSink ssink;
   Sane::Display display;
   MaskedOcclusionCulling* moc;
 };
