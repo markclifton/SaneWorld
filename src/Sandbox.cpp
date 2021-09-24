@@ -17,7 +17,6 @@
 #include <sane/graphics/framebuffer.hpp>
 #include <sane/graphics/texture.hpp>
 #include <sane/debugging/logging.hpp>
-#include <sane/debugging/console.hpp>
 
 #define USE_D3D 1
 #include <MaskedOcclusionCulling.hpp>
@@ -31,6 +30,7 @@ class Sandbox : public Sane::App
 public:
   Sandbox()
     : display("Sandbox", WIDTH, HEIGHT)
+    , ssink(Sane::Logging::GetLogSink())
   {
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
@@ -56,8 +56,7 @@ public:
 
   virtual void Run() override
   {
-    CreateDbgConsole("Debug Console");
-    SANE_WARN("Current path is " << std::filesystem::current_path());
+    SANE_WARN("Current path is {}", std::filesystem::current_path().c_str());
 
     struct Vertex {
       float x, y, z, w, r, g, b;
@@ -129,7 +128,7 @@ public:
     };
 
     Vertex s[8];
-    createSquare(s, 0, 0, -1, .5f, .5f);
+    createSquare(s, -.5f, 0, -3, .5f, .5f);
     createSquare(&s[4], -.5f, 0, -3, .5f, .5f);
 
     Sane::ShaderProgram sProg_no_tex(vs_modern, fs_modern);
@@ -177,8 +176,8 @@ public:
         glm::mat4 mvp = p * m;
 
         {
-          moveSquare(&s[0], deltaX,  - deltaY, deltaZ);
-          SANE_INFO("z: " << s[0].z);
+          moveSquare(&s[0], deltaX, -deltaY, deltaZ);
+          SANE_INFO("z: {}", s[0].z);
 
           {
             sProg_no_tex.Bind();
@@ -199,8 +198,7 @@ public:
           moc->RenderTriangles(&xformVerts[0], indices, 2);
           auto result = moc->TestTriangles(&xformVerts[16], indices, 2);
 
-          SANE_WARN("Square visible: " << result);
-
+          SANE_WARN("Square visible: {}", !result);
           visible = !result;
         }
 
@@ -213,7 +211,7 @@ public:
 
           ibo_no_tex.Bind();
           glUniformMatrix4fv(mvp_location_no_tex, 1, GL_FALSE, (const GLfloat*)&mvp[0][0]);
-          glDrawElements(GL_TRIANGLES, 12, GL_UNSIGNED_INT, (void*)0);
+          glDrawElements(GL_TRIANGLES, (visible ? 12 : 6), GL_UNSIGNED_INT, (void*)0);
           ibo_no_tex.Unbind();
 
           vCol_no_tex.Disable();
@@ -275,7 +273,8 @@ public:
       ImGui::End();
       ImGui::PopStyleVar();
 
-      UpdateDbgConsole();
+      //UpdateDbgConsole();
+      ssink->Render();
 
       ImGui::Render();
       ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
@@ -295,17 +294,12 @@ private:
   const size_t WIDTH = 1280;
   const size_t HEIGHT = 720;
 
+  const Sane::Logging::LogSink ssink;
   Sane::Display display;
   MaskedOcclusionCulling* moc;
 };
 
 Sane::App* Sane::CreateApp()
 {
-#ifdef _DEBUG
-  ENABLE_DEBUG_LOGS();
-#else
-  ENABLE_LOGS();
-#endif
-
   return new Sandbox();
 }
