@@ -1,6 +1,3 @@
-#include "imgui.h"
-#include "imgui_impl_glfw.h"
-#include "imgui_impl_opengl3.h"
 
 #include <shader_code.hpp>
 
@@ -65,10 +62,10 @@ class GameFrame : public Sane::Layer, public Sane::Events::Dispatcher
 {
 public:
   GameFrame(uint64_t frameId)
-    : frameId(frameId)
+    : frameId(frameId), Sane::Layer("GameFrame")
   {}
 
-  virtual void Process() override
+  virtual void Render() override
   {
     auto newSize = ImGui::GetWindowSize();
     if (frameSize.x != newSize.x
@@ -103,86 +100,24 @@ class Sandbox : public Sane::App
 {
 public:
   Sandbox()
-    : display("Sandbox", WIDTH, HEIGHT)
+    : Sane::App("Sandbox")
+    , surface(1280, 720)
+    , frame(surface.GetColorAttachment())
   {
-    IMGUI_CHECKVERSION();
-    ImGui::CreateContext();
-    ImGui::GetIO().ConfigFlags |= ImGuiConfigFlags_DockingEnable;
-    ImGui::GetIO().ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
-    ImGui::StyleColorsDark();
-    ImGui_ImplGlfw_InitForOpenGL(display, true);
-    ImGui_ImplOpenGL3_Init(nullptr);
+    PushLayer(&console);
+    PushLayer(&fpsCounter);
+    PushLayer(&frame);
   }
 
   ~Sandbox()
   {
-    ImGui_ImplOpenGL3_Shutdown();
-    ImGui_ImplGlfw_Shutdown();
-    ImGui::DestroyContext();
-  }
-
-  void BeginFrame()
-  {
-    ImGui_ImplOpenGL3_NewFrame();
-    ImGui_ImplGlfw_NewFrame();
-    ImGui::NewFrame();
-
-    ImGui::DockSpaceOverViewport(ImGui::GetMainViewport());
-  }
-
-  void EndFrame()
-  {
-    ImGui::Render();
-    ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-
-    if (ImGui::GetIO().ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
-    {
-      ImGui::UpdatePlatformWindows();
-      ImGui::RenderPlatformWindowsDefault();
-      glfwMakeContextCurrent(display);
-    }
-  }
-
-  virtual void Run() override
-  {
-    RenderSurface surface(1280, 720);
-
-    Sane::Console console;
-    Sane::FpsCounter fpsCounter;
-    GameFrame frame(surface.GetColorAttachment());
-    overlay_layers_.PushLayer(&console);
-    overlay_layers_.PushLayer(&fpsCounter);
-    overlay_layers_.PushLayer(&frame);
-
-    SANE_WARN("Current path is {}", std::filesystem::current_path().c_str());
-
-    while (display.IsRunning())
-    {
-      BeginFrame();
-      surface.Bind();
-      surface.Clear();
-      for (auto& layer : layers_)
-      {
-        layer->Process();
-      }
-      surface.Unbind();
-
-      for (auto& layer : overlay_layers_)
-      {
-        layer->Process();
-      }
-
-      EndFrame();
-
-      display.Update();
-    }
   }
 
 private:
-  const size_t WIDTH = 1280;
-  const size_t HEIGHT = 720;
-
-  Sane::Display display;
+  RenderSurface surface;
+  Sane::Console console;
+  Sane::FpsCounter fpsCounter;
+  GameFrame frame;
 };
 
 Sane::App* Sane::CreateApp()
