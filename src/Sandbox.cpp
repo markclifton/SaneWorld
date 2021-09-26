@@ -10,6 +10,9 @@
 #include <sane/logging/log.hpp>
 #include <sane/layers/console.hpp>
 #include <sane/layers/fpscounter.hpp>
+#include <sane/layers/gamewindow.hpp>
+
+#include <sane/rendering/renderer2d.hpp>
 
 class RenderSurface : public Sane::Events::Listener
 {
@@ -58,55 +61,17 @@ private:
   Sane::Framebuffer framebuffer;
 };
 
-class GameFrame : public Sane::Layer, public Sane::Events::Dispatcher
-{
-public:
-  GameFrame(uint64_t frameId)
-    : frameId(frameId), Sane::Layer("GameFrame")
-  {}
-
-  virtual void Render() override
-  {
-    auto newSize = ImGui::GetWindowSize();
-    if (frameSize.x != newSize.x
-      || frameSize.y != newSize.y)
-    {
-      frameSize = newSize;
-
-      Sane::Event event;
-      event.action = 1000;
-      event.data = &frameSize;
-      event.size = sizeof(frameSize);
-      SubmitEvent(event);
-    }
-
-    ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.f, 0.f));
-    ImGui::Begin("GameWindow");
-    {
-      ImGui::BeginChild("GameRender");
-      ImGui::Image((void*)frameId, frameSize, ImVec2(0, 1), ImVec2(1, 0));
-      ImGui::EndChild();
-    }
-    ImGui::End();
-    ImGui::PopStyleVar();
-  }
-
-private:
-  uint64_t frameId;
-  ImVec2 frameSize;
-};
-
 class Sandbox : public Sane::App
 {
 public:
   Sandbox()
     : Sane::App("Sandbox")
     , surface(1280, 720)
-    , frame(surface.GetColorAttachment())
+    , gameWindow(surface.GetColorAttachment())
   {
-    PushLayer(&console);
-    PushLayer(&fpsCounter);
-    PushLayer(&frame);
+    PushOverlay(&console);
+    PushOverlay(&fpsCounter);
+    PushOverlay(&gameWindow);
   }
 
   ~Sandbox()
@@ -117,7 +82,7 @@ private:
   RenderSurface surface;
   Sane::Console console;
   Sane::FpsCounter fpsCounter;
-  GameFrame frame;
+  Sane::GameWindow gameWindow;
 };
 
 Sane::App* Sane::CreateApp()
