@@ -14,64 +14,19 @@
 
 #include <sane/rendering/renderer2d.hpp>
 
-class RenderSurface : public Sane::Events::Listener
-{
-public:
-  RenderSurface(size_t width, size_t height)
-    : framebuffer(width, height)
-    , Sane::Events::Listener("RenderSurface")
-  {
-  }
-
-  virtual bool ProcessEvent(Sane::Event& evt) override
-  {
-    switch (evt.action)
-    {
-    case 1000:
-    {
-      ImVec2 size = *(ImVec2*)evt.data;
-      framebuffer.Resize(static_cast<size_t>(size.x), static_cast<size_t>(size.y));
-      return true;
-    }
-    default:
-      return false;
-    }
-  }
-
-  uint64_t GetColorAttachment() {
-    return framebuffer.GetAttachment(0);
-  }
-
-  void Bind()
-  {
-    framebuffer.Bind();
-  }
-
-  void Unbind()
-  {
-    framebuffer.Unbind();
-  }
-
-  void Clear()
-  {
-    framebuffer.Clear();
-  }
-
-private:
-  Sane::Framebuffer framebuffer;
-};
+#include <sane/math/vector.hpp>
 
 class Sandbox : public Sane::App
 {
 public:
   Sandbox()
     : Sane::App("Sandbox")
-    , surface(1280, 720)
-    , gameWindow(surface.GetColorAttachment())
+    , console()
+    , gameWindow(framebuffer.GetAttachment(0))
   {
     PushOverlay(&console);
-    PushOverlay(&fpsCounter);
     PushOverlay(&gameWindow);
+    PushOverlay(&fpsCounter);
   }
 
   ~Sandbox()
@@ -79,7 +34,6 @@ public:
   }
 
 private:
-  RenderSurface surface;
   Sane::Console console;
   Sane::FpsCounter fpsCounter;
   Sane::GameWindow gameWindow;
