@@ -7,8 +7,6 @@
 #include <sane/ecs/systems/physics.hpp>
 #include <sane/ecs/systems/movement.hpp>
 #include <sane/ecs/systems/renderer2d.hpp>
-#include <sane/layers/layer.hpp>
-#include <sane/layers/console.hpp>
 #include <sane/layers/fpscounter.hpp>
 #include <sane/layers/gamewindow.hpp>
 
@@ -23,7 +21,7 @@ public:
     , physicsSystem(Registry())
     , collisionSystem(Registry())
   {
-    PushOverlay(&console);
+    DisplayConsole(true);
     PushOverlay(&gameWindow);
     PushOverlay(&fpsCounter);
 
@@ -55,7 +53,6 @@ public:
   }
 
 private:
-  Sane::Console console;
   Sane::FpsCounter fpsCounter;
   Sane::GameWindow gameWindow;
   Sane::Systems::Renderer2d renderer;
