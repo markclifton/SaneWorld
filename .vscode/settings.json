@@ -102,7 +102,9 @@
         "unordered_set": "cpp",
         "variant": "cpp",
         "__bits": "cpp",
-        "filesystem": "cpp"
+        "filesystem": "cpp",
+        "typeindex": "cpp",
+        "valarray": "cpp"
     },
     "C_Cpp.intelliSenseEngineFallback": "Enabled"
 }

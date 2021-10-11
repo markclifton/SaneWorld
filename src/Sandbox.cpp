@@ -1,14 +1,7 @@
 #include <sane/entrypoint.hpp>
-#include <sane/ecs/components/position.hpp>
-#include <sane/ecs/components/scale.hpp>
-#include <sane/ecs/components/player.hpp>
-#include <sane/ecs/components/translation.hpp>
-#include <sane/ecs/systems/collision.hpp>
-#include <sane/ecs/systems/physics.hpp>
-#include <sane/ecs/systems/movement.hpp>
-#include <sane/ecs/systems/renderer2d.hpp>
-#include <sane/layers/fpscounter.hpp>
-#include <sane/layers/gamewindow.hpp>
+
+#include <sane/ecs/common.hpp>
+#include <sane/layers/common.hpp>
 
 class Sandbox : public Sane::App
 {
