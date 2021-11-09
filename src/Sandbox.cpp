@@ -9,7 +9,6 @@ public:
   Sandbox()
     : Sane::App("Sandbox")
     , gameWindow(framebuffer.GetAttachment(0))
-    , renderer(Registry())
     , movementSystem(Registry())
     , physicsSystem(Registry())
     , collisionSystem(Registry())
@@ -38,7 +37,6 @@ public:
     PushSystem(&movementSystem);
     PushSystem(&physicsSystem);
     PushSystem(&collisionSystem);
-    PushSystem(&renderer);
   }
 
   ~Sandbox()
@@ -48,7 +46,6 @@ public:
 private:
   Sane::FpsCounter fpsCounter;
   Sane::GameWindow gameWindow;
-  Sane::Systems::Renderer2d renderer;
   Sane::Systems::Movement movementSystem;
   Sane::Systems::Physics physicsSystem;
   Sane::Systems::Collision collisionSystem;
