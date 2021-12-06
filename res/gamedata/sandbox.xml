@@ -1,0 +1,10 @@
+<map name="Sandbox">
+    <objects>
+        <object type="player">
+            <location x="0" y="0" z="0"></location>
+        </object>
+    </objects>
+    <models></models>
+    <textures></textures>
+    <sounds></sounds>
+</map>
