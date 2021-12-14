@@ -11,6 +11,7 @@ public:
     , camSystem(Registry())
     , grid(Registry(), 16)
     , loader(Registry())
+    , proj(Registry())
   {
 #ifndef NDEBUG
     DisplayConsole(true);
@@ -19,6 +20,7 @@ public:
 
     PushLayer(&loader);
     PushLayer(&grid);
+    PushLayer(&proj);
     PushLayer(&camSystem);
 
     StartGame();
@@ -35,6 +37,7 @@ private:
   Sane::ECS::Camera camSystem;
   Sane::ECS::Grid grid;
   Sane::ECS::Loader loader;
+  Sane::ECS::Projectile proj;
 };
 
 Sane::App* Sane::CreateApp()
