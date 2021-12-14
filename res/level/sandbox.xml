@@ -1,7 +1,9 @@
 <map name="Sandbox">
     <objects>
         <object type="player">
-            <location x="0" y="0" z="0"></location>
+            <camera type="1"/>
+            <position x="2" y="-4" z="0" />
+            <rotation x="0" y="45" z="0" />
         </object>
     </objects>
     <models></models>
